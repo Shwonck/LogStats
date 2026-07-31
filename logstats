@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+import argparse
+from datetime import datetime, timezone
+import sys
+
+from parser import parse_line
+from LogStats import LogStats
+
+'''
+LogStats CLI Application
+
+Main entry point for processing web server access logs.
+- Streams log files line-by-line for $O(1)$ memory usage.
+- Parses and validates HTTP log entries, discarding malformed lines.
+- Supports optional time-based filtering using the '--since' flag.
+- Generates summary reports (HTTP status codes, top endpoints, p95 latency).
+'''
+
+def main():
+    parser = argparse.ArgumentParser(description="Processa arquivos de log HTTP.")
+    parser.add_argument("file_path", help="Caminho do arquivo de log")
+    parser.add_argument("--since", help="Filtra requisições a partir deste timestamp ISO (ex: 2026-07-21T10:00:00)", default=None)
+
+    args = parser.parse_args()
+
+    # Optional flag treatment --since
+    since_dt = None
+    if args.since:
+        try:
+            since_dt = datetime.fromisoformat(args.since)
+
+            if since_dt.tzinfo is None:
+                since_dt = since_dt.replace(tzinfo=timezone.utc)
+        except ValueError:
+            print("Erro: O argumento --since deve estar no formato ISO (ex: 2026-07-21T10:00:00).", file=sys.stderr)
+            sys.exit(1)
+
+    stats = LogStats(since=since_dt)
+
+    try:
+        with open(args.file_path, 'r', encoding='utf-8', errors='replace') as f:
+            for line in f:
+                entry = parse_line(line)
+                if entry is None:
+                    stats.recorded_malformed()
+                else:
+                    stats.add_entry(entry)
+
+    except FileNotFoundError:
+        print(f"Erro: Arquivo '{args.file_path}' não encontrado.", file=sys.stderr)
+        sys.exit(1)
+
+    print(stats.calculate_results())
+
+if __name__ == "__main__":
+    main()

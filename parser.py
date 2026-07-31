@@ -1,14 +1,26 @@
 import re
 from datetime import datetime
 
+'''
+Common Log Format specification:
+- ip: Client IPv4 address
+- timestamp: Date, time, and UTC offset [DD/Mon/YYYY:HH:MM:SS +0000]
+- method: HTTP request method (GET, POST, etc.)
+- endpoint: Requested URI path
+- protocol: HTTP protocol version (e.g., HTTP/1.1)
+- status: 3-digit HTTP response status code
+- bytes: Response body payload size in bytes
+- response_time: Total request processing duration in seconds
+'''
+
 LOG_PATTERN = re.compile(
-    r'^(?P<ip>\S+)\s+'                # IP do cliente
-    r'\S+\s+\S+\s+'                   # Dois campos ignoráveis (ex: - -)
-    r'\[(?P<timestamp>[^\]]+)\]\s+'   # Timestamp entre colchetes
-    r'"(?P<method>\S+)\s+(?P<endpoint>\S+)\s+(?P<protocol>[^"]+)"\s+' # Requisição entre aspas
-    r'(?P<status>\d{3})\s+'           # Código de status (3 dígitos)
-    r'(?P<bytes>\d+|-)\s+'            # Tamanho da resposta em bytes (ou -)
-    r'(?P<response_time>\d+(?:\.\d+)?)$' # Tempo de resposta em segundos (int ou float)
+    r'^(?P<ip>\S+)\s+'
+    r'\S+\s+\S+\s+'
+    r'\[(?P<timestamp>[^\]]+)\]\s+'
+    r'"(?P<method>\S+)\s+(?P<endpoint>\S+)\s+(?P<protocol>[^"]+)"\s+'
+    r'(?P<status>\d{3})\s+'
+    r'(?P<bytes>\d+|-)\s+'
+    r'(?P<response_time>\d+(?:\.\d+)?)$'
 )
 
 def parse_line(log_line):
@@ -34,6 +46,5 @@ def parse_line(log_line):
         }
         return parsed_data
     
-    except(ValueError, KeyError): #### Tratar posteriormente
-
+    except(ValueError, KeyError):
         return None
