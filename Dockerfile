@@ -9,4 +9,6 @@ COPY . .
 
 RUN chmod +x logstats
 
+RUN sed -i 's/\r$//' logstats && chmod +x logstats
+
 ENTRYPOINT ["./logstats"]
